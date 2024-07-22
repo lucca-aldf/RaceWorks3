@@ -69,7 +69,6 @@ class BezierPoint(Point):
         self.children.append(new_child)
         
     def toggle_C1(self):
-        print(self.children)
         if len(self.children) < 2:
             return False
         
@@ -78,7 +77,6 @@ class BezierPoint(Point):
         else:
             self.state = BezierPoint.C1
         
-        print(self.state)
         self.update_children(self.children[0])
     
     def update_children(self, locked_child:ChildPoint):
