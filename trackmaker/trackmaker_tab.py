@@ -141,6 +141,31 @@ class TrackMakerTab(Tab):
         elif event.type == pg.KEYDOWN and pg.key.get_pressed()[pg.K_F3]:
             self.splines_visibility = not self.splines_visibility
         
+        elif event.type == pg.KEYDOWN and pg.key.get_pressed()[pg.K_RETURN]:
+            if len(self.splines) == 0:
+                return
+
+            save_list: List = []
+
+            splines = list(self.splines.sprites())
+            
+            for point in splines[0].points:
+                save_list.append(point.position)
+
+            if len(self.splines) == 1:
+                print(save_list)
+                return
+
+            for i in range(1, len(splines)):
+                for j in range(1, 4):
+                    save_list.append(splines[i].points[j].position)
+
+            if save_list[0] == save_list[-1]:
+                save_list.pop()
+
+            print(save_list)
+
+        
         self.x = max(0, min(self.width, self.x))
         self.y = max(0, min(self.height, self.y))
     
