@@ -15,16 +15,24 @@ class Element(pg.sprite.Sprite):
 
 class  Point(Element):
     
-    def __init__(self, position:Tuple[float, float], radius:int=1, color:Tuple[int, int, int]=(-1, -1, -1)) -> None:
+    def __init__(self, position:Tuple[float, float], radius:int=1, color:Tuple[int, int, int]=(-1, -1, -1), spline_parents:List[Spline]=list()) -> None:
         super().__init__()
         self.position = position
         self.display_radius = radius
         self.color = color
+        self.spline_parents:List[Spline] = spline_parents
 
         self.img = pg.Surface((self.display_radius * 2 + 1, self.display_radius * 2 + 1), pg.SRCALPHA)
         self.img.set_colorkey((0, 0, 0))
         gfxdraw.filled_circle(self.img, self.display_radius, self.display_radius, self.display_radius, self.color)
 
+
+    def add_parent_spline(self, new_parent:Spline):
+        self.spline_parents.append(new_parent)
+
+    def update_parent_spline(self):
+        for spline in self.spline_parents:
+            spline.update()
 
     def get_color(self):
         return self.color
@@ -53,6 +61,8 @@ class  Point(Element):
         self.x += movement[0]
         self.y += movement[1]
 
+        for spline in self.spline_parents:
+            spline.update()
 
 class BezierPoint(Point):
     C0 = 'C0'
@@ -91,6 +101,8 @@ class BezierPoint(Point):
         if self.state == BezierPoint.C1:
             update_child.x = 2 * self.x - locked_child.x
             update_child.y = 2 * self.y - locked_child.y
+        
+        self.update_parent_spline()
     
     def move(self, movement:Tuple[float, float] | List[float]):
         super().update()
@@ -157,15 +169,18 @@ class Spline(Element):
     def __init__(self, points:Tuple[Point, Point, Point, Point], color:Tuple[int, int, int]=(0,0,0)) -> None:
         super().__init__()
         self.points = points
-        self.bezier_points = [self.bezier(t) for t in np.linspace(0, 1, 1000)]
+        self.bezier_points = list()
         self.start_point = points[0]
         self.end_point = points[3]
         self.color = color
         self.width = 10
+        self.update()
 
         self.lines = (LineBetweenPoints(self.points[0], self.points[1], (255,255,255)),
                       LineBetweenPoints(self.points[2], self.points[3], (255,255,255)))
 
+        for point in self.points:
+            point.add_parent_spline(self)
 
     @classmethod
     def from_nothing(cls, spline_color:Tuple[int,int,int], start_pos:Tuple[int,int], point_radius:int, first_color:Tuple[int,int,int], second_color:Tuple[int,int,int]):
@@ -215,13 +230,17 @@ class Spline(Element):
         first_color = previous_spline.end_point.color
         second_color = next_spline.start_point.color
 
-        return cls(
+        new_spline = cls(
             (previous_spline.end_point,
             ChildPoint(previous_spline.end_point, point_1_pos, point_radius, first_color),
             ChildPoint(next_spline.start_point, point_2_pos, point_radius, second_color),
             next_spline.start_point),
             spline_color)
 
+        for point in new_spline.points:
+            point.add_parent_spline(new_spline)
+
+        return new_spline
 
     def bezier(self, t):
         n = len(self.points) - 1
@@ -235,12 +254,7 @@ class Spline(Element):
 
 
     def update(self):
-        self.bezier_points = [self.bezier(t) for t in np.linspace(0, 1, 1000)]
-        
-
-    @property
-    def img(self):
-        padding = self.width + 2  # Add some padding to ensure no clipping
+        padding = self.width + 2
         max_x = max(point.x for point in self.points)
         min_x = min(point.x for point in self.points)
         max_y = max(point.y for point in self.points)
@@ -248,13 +262,26 @@ class Spline(Element):
 
         width = max_x - min_x + 2 * padding
         height = max_y - min_y + 2 * padding
+        
+        self.bezier_points = [self.bezier(t) for t in np.linspace(0, 1, (width + height))]
+        self.bezier_points = [(int(x - min_x + padding), int(y - min_y + padding)) for x, y in self.bezier_points]
+        
+
+    @property
+    def img(self):
+        padding = self.width + 2
+        max_x = max(point.x for point in self.points)
+        min_x = min(point.x for point in self.points)
+        max_y = max(point.y for point in self.points)
+        min_y = min(point.y for point in self.points)
+
+        width = max_x - min_x + 2 * padding
+        height = max_y - min_y + 2 * padding
+        
         img = pg.Surface((width, height), pg.SRCALPHA)
-
-        bezier_points = [self.bezier(t) for t in np.linspace(0, 1, 1000)]
-        bezier_points = [(int(x - min_x + padding), int(y - min_y + padding)) for x, y in bezier_points]
-
-        for i in range(len(bezier_points) - 1):
-            pg.draw.line(img, self.color, bezier_points[i], bezier_points[i + 1], self.width)
+        
+        for i in range(width+height):
+            pg.draw.circle(img, self.color, self.bezier_points[i], self.width//2)
 
         return img
 
