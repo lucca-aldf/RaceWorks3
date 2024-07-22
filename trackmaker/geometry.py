@@ -59,9 +59,8 @@ class BezierPoint(Point):
     C1 = 'C1'
     G1 = 'G1'
 
-    def __init__(self, parent:Spline, position: Tuple[float, float], radius: int = 1, color: Tuple[int, int, int] = (-1, -1, -1)) -> None:
+    def __init__(self, position: Tuple[float, float], radius: int = 1, color: Tuple[int, int, int] = (-1, -1, -1)) -> None:
         super().__init__(position, radius, color)
-        self.parent = parent
         self.children:List[ChildPoint] = list()
         
         self.state = BezierPoint.C0
