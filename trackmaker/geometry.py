@@ -63,7 +63,7 @@ class BezierPoint(Point):
         super().__init__(position, radius, color)
         self.children:List[ChildPoint] = list()
         
-        self.state = BezierPoint.C1
+        self.state = BezierPoint.G1
         
     def adopt(self, new_child):
         self.children.append(new_child)
@@ -79,6 +79,17 @@ class BezierPoint(Point):
         
         self.update_children(self.children[0])
     
+    def toggle_G1(self):
+        if len(self.children) < 2:
+            return False
+
+        if self.state == BezierPoint.G1:
+            self.state = BezierPoint.C0
+        else:
+            self.state = BezierPoint.G1
+        
+        self.update_children(self.children[0])
+    
     def update_children(self, locked_child:ChildPoint):
         if self.state == BezierPoint.C0 or len(self.children) < 2:
             return False
@@ -91,7 +102,13 @@ class BezierPoint(Point):
         if self.state == BezierPoint.C1:
             update_child.x = 2 * self.x - locked_child.x
             update_child.y = 2 * self.y - locked_child.y
-    
+
+        if self.state == BezierPoint.G1:
+            update_distance = math.hypot(update_child.x - self.x, update_child.y - self.y)
+
+            update_child.x = self.x + update_distance * (self.x - locked_child.x) / math.hypot(self.x - locked_child.x, self.y - locked_child.y)
+            update_child.y = self.y + update_distance * (self.y - locked_child.y) / math.hypot(self.x - locked_child.x, self.y - locked_child.y)
+
     def move(self, movement:Tuple[float, float] | List[float]):
         super().update()
         super().move(movement)

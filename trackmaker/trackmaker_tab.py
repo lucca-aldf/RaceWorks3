@@ -52,7 +52,7 @@ class TrackMakerTab(Tab):
 
     def actions(self, event):
         this_spline: Spline | None = None
-        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and not pg.key.get_pressed()[pg.K_z]:
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and not pg.key.get_pressed()[pg.K_z] and not pg.key.get_pressed()[pg.K_x]:
             self.dragged_point = get_point_under_mouse(self.points, self.get_mouse_pos())
             
         elif event.type == pg.MOUSEBUTTONUP and event.button == 1:
@@ -119,6 +119,11 @@ class TrackMakerTab(Tab):
             this_point = get_point_under_mouse(self.points, self.get_mouse_pos())
             if type(this_point) is BezierPoint:
                 this_point.toggle_C1()
+        
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1 and pg.key.get_pressed()[pg.K_x]:
+            this_point = get_point_under_mouse(self.points, self.get_mouse_pos())
+            if type(this_point) is BezierPoint:
+                this_point.toggle_G1()
             
         elif event.type == pg.KEYDOWN and pg.key.get_pressed()[pg.K_w]:
             self.y -= 100
