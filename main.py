@@ -58,7 +58,7 @@ def line_tracer(angle, start_x, start_y, mask):
         x += cos_angle
         y -= sin_angle
     
-    pg.draw.circle(screen, (0, 0, 0), (604, 486)), 1, 1)
+    pg.draw.circle(screen, (0, 0, 0), (604, 486), 1, 1)
     return math.sqrt((int(x) - start_x) ** 2 + (int(y) - start_y) ** 2)
 
 running = True
