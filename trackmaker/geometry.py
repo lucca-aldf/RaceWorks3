@@ -63,7 +63,7 @@ class BezierPoint(Point):
         super().__init__(position, radius, color)
         self.children:List[ChildPoint] = list()
         
-        self.state = BezierPoint.C0
+        self.state = BezierPoint.C1
         
     def adopt(self, new_child):
         self.children.append(new_child)
@@ -80,7 +80,7 @@ class BezierPoint(Point):
         self.update_children(self.children[0])
     
     def update_children(self, locked_child:ChildPoint):
-        if self.state == BezierPoint.C0:
+        if self.state == BezierPoint.C0 or len(self.children) < 2:
             return False
         
         if self.children[0] is locked_child:
